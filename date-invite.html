@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Will you go on a date with me?</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#fbe3ea;--bg2:#f4d3e6;--card:#fffaf0;--ink:#7a1f3d;--soft:#a5607a;--pink:#e8719b;--pink2:#d4457a;--line:#f0c9d6;--chip:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg1:#2a1220;--bg2:#3a1830;--card:#3b2230;--ink:#ffd6e3;--soft:#d9a3b8;--line:#5c3347;--chip:#4a2b3b}}
+:root[data-theme="dark"]{--bg1:#2a1220;--bg2:#3a1830;--card:#3b2230;--ink:#ffd6e3;--soft:#d9a3b8;--line:#5c3347;--chip:#4a2b3b}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{font-family:'DM Sans',system-ui,sans-serif;color:var(--ink);background:linear-gradient(160deg,var(--bg1),var(--bg2));background-color:var(--bg1);display:flex;align-items:center;justify-content:center;padding:16px;overflow:hidden}
+.card{width:100%;max-width:380px;background:var(--card);border-radius:26px;padding:28px 24px;text-align:center;box-shadow:0 18px 50px rgba(122,31,61,.18);animation:pop .45s cubic-bezier(.2,1.3,.4,1);position:relative;z-index:2;max-height:100%;overflow-y:auto}
+@keyframes pop{from{transform:scale(.85);opacity:0}to{transform:none;opacity:1}}
+h1,h2{font-family:'Fraunces',Georgia,serif;font-weight:700;margin:12px 0 8px;line-height:1.2}
+h1{font-size:1.5rem}h2{font-size:1.4rem}
+p{margin:6px 0;color:var(--soft);font-size:.9rem}
+.avatar{width:84px;height:84px;border-radius:18px;margin:0 auto;background:linear-gradient(135deg,#ffd1dc,#f7a8c4);display:flex;align-items:center;justify-content:center;font-size:3rem;box-shadow:0 6px 16px rgba(0,0,0,.15)}
+.icon{font-size:2.4rem}
+.btn{font:700 .95rem 'DM Sans',sans-serif;border:0;border-radius:999px;padding:12px 26px;color:#fff;background:linear-gradient(135deg,var(--pink),var(--pink2));cursor:pointer;margin-top:14px;box-shadow:0 6px 14px rgba(212,69,122,.35);transition:transform .15s}
+.btn:active{transform:scale(.96)}
+.btn.full{width:100%}
+.btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.row{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
+.no{position:fixed;font:600 .75rem 'DM Sans',sans-serif;background:#b78ad8;color:#fff;border:0;border-radius:999px;padding:7px 14px;cursor:pointer;z-index:5;transition:left .25s,top .25s,transform .4s,opacity .4s}
+.no.gone{opacity:0;transform:scale(.2) rotate(40deg);pointer-events:none}
+label{display:block;text-align:left;font-weight:700;font-size:.8rem;margin:14px 0 5px}
+input,select{width:100%;font:500 .95rem 'DM Sans',sans-serif;padding:11px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--chip);color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.food{background:var(--chip);border:2px solid var(--line);border-radius:16px;padding:14px 4px;cursor:pointer;font:600 .78rem 'DM Sans',sans-serif;color:var(--ink);transition:.15s}
+.food span{display:block;font-size:1.7rem;margin-bottom:4px}
+.food.sel{border-color:var(--pink2);background:#ffe0eb;transform:scale(1.05)}
+:root[data-theme="dark"] .food.sel{background:#5a2b43}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .food.sel{background:#5a2b43}}
+.fee{border:1.5px dashed var(--line);border-radius:14px;padding:14px;margin:14px 0 0;background:var(--chip)}
+.fee b{font-size:1.5rem;font-family:'Fraunces',Georgia,serif}
+.fee small{display:block;color:var(--soft);font-size:.72rem;margin-top:4px}
+.link{background:none;border:0;color:var(--soft);font:500 .75rem 'DM Sans';margin-top:12px;cursor:pointer;text-decoration:underline}
+.hearts{letter-spacing:6px;color:var(--pink)}
+.summary{background:var(--chip);border-radius:14px;padding:12px;margin-top:14px;font-size:.9rem;line-height:1.7}
+canvas{position:fixed;inset:0;pointer-events:none;z-index:9}
+footer{position:fixed;bottom:calc(8px + env(safe-area-inset-bottom,0px));left:0;right:0;text-align:center;font-size:.65rem;color:var(--soft);opacity:.7}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div id="app"></div>
+<button class="no" id="no" style="display:none">no 🙁</button>
+<footer>built just for you ♥</footer>
+
+<script>
+const app=document.getElementById('app'),noBtn=document.getElementById('no');
+const state={day:'',time:'',food:null};
+let dodges=0;
+
+/* ---------- confetti ---------- */
+const cv=document.getElementById('fx'),cx=cv.getContext('2d');let parts=[],raf;
+function size(){cv.width=innerWidth;cv.height=innerHeight}size();addEventListener('resize',size);
+function confetti(n=140){
+  const cols=['#e8719b','#f7c948','#7bd389','#6ec6ff','#b78ad8','#ff9f68'];
+  for(let i=0;i<n;i++)parts.push({x:innerWidth/2,y:innerHeight/2,vx:(Math.random()-.5)*14,vy:Math.random()*-13-2,r:Math.random()*5+3,c:cols[i%6],life:120+Math.random()*60});
+  cancelAnimationFrame(raf);(function loop(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    parts=parts.filter(p=>p.life-->0);
+    parts.forEach(p=>{p.vy+=.35;p.x+=p.vx;p.y+=p.vy;cx.fillStyle=p.c;cx.globalAlpha=Math.min(1,p.life/40);cx.fillRect(p.x,p.y,p.r,p.r*1.6)});
+    if(parts.length)raf=requestAnimationFrame(loop);else cx.clearRect(0,0,cv.width,cv.height);
+  })();
+}
+
+/* ---------- screens ---------- */
+function show(html){app.innerHTML='<div class="card">'+html+'</div>';}
+
+function ask(){
+  show(`<div class="avatar">🐶</div>
+    <h1>🌸 Will you go on a date with me? 🌸</h1>
+    <button class="btn" id="yes">YES ♥</button>`);
+  dodges=0;noBtn.className='no';noBtn.style.display='block';
+  const r=document.getElementById('yes').getBoundingClientRect();
+  noBtn.style.left=(r.right+14)+'px';noBtn.style.top=r.top+'px';noBtn.style.transform='';
+  document.getElementById('yes').onclick=()=>{noBtn.style.display='none';confetti();wait()};
+}
+function dodge(e){
+  e.preventDefault();dodges++;
+  if(dodges>=4){noBtn.classList.add('gone');setTimeout(()=>noBtn.style.display='none',450);return}
+  const w=innerWidth-90,h=innerHeight-50;
+  noBtn.style.left=Math.max(8,Math.random()*w)+'px';
+  noBtn.style.top=Math.max(8,Math.random()*h)+'px';
+  noBtn.style.transform='scale('+(1-dodges*.15)+') rotate('+(Math.random()*40-20)+'deg)';
+}
+['mouseover','touchstart','click'].forEach(ev=>noBtn.addEventListener(ev,dodge,{passive:false}));
+
+function wait(){
+  show(`<div class="icon" style="font-size:3rem">😳</div>
+    <h2>WAIT YOU ACTUALLY SAID YES?? 😂</h2>
+    <p>I was so ready for you to say no 😅</p>
+    <button class="btn" id="n">okay okay! →</button>`);
+  document.getElementById('n').onclick=when;
+}
+function when(){
+  show(`<div class="icon">📅🐾</div>
+    <h2>So… when are you free?</h2>
+    <label>Pick a Day 📆</label><input type="date" id="d">
+    <label>What Time? ⏰</label><select id="t"><option value="">Select a time…</option></select>
+    <button class="btn full" id="n" disabled>set the date ♥</button>`);
+  const d=document.getElementById('d'),t=document.getElementById('t'),n=document.getElementById('n');
+  d.min=new Date().toISOString().slice(0,10);
+  for(let m=6*60;m<=22*60;m+=30){const h=Math.floor(m/60),mm=m%60,ap=h>=12?'PM':'AM',hh=((h+11)%12)+1;
+    const s=hh+':'+String(mm).padStart(2,'0')+' '+ap;t.add(new Option(s,s))}
+  const chk=()=>{n.disabled=!(d.value&&t.value)};d.onchange=t.onchange=chk;
+  n.onclick=()=>{state.day=new Date(d.value+'T00:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});state.time=t.value;food()};
+}
+function food(){
+  const items=[['🍔','Burger'],['🍕','Pizza'],['🌯','Shawarma'],['🍛','Mandi'],['🍚','Biriyani'],['🍗','Al faham']];
+  show(`<h2>What are we feeling? 🍽️✨</h2><p>pick your vibe</p>
+    <div class="grid">${items.map(i=>`<button class="food" data-f="${i[1]}"><span>${i[0]}</span>${i[1]}</button>`).join('')}</div>`);
+  document.querySelectorAll('.food').forEach(b=>b.onclick=()=>{
+    document.querySelectorAll('.food').forEach(x=>x.classList.remove('sel'));b.classList.add('sel');
+    state.food=b.dataset.f;setTimeout(glad,550);
+  });
+}
+function glad(){
+  show(`<h2>glad you didn't say no. be ready by 6, I'm coming to get you 🚗</h2>
+    <p><i>P.S. normal people text. I made a website, during lunch, for you. no big deal.</i></p>
+    <div class="hearts">♥ ♥ ♥ ♥ ♥</div>
+    <button class="btn full" id="n">ok I accept 🥰</button>`);
+  document.getElementById('n').onclick=fee;
+}
+function fee(){
+  show(`<div class="icon">💳</div><h2>one small fee</h2>
+    <p>to confirm your acceptance of this date, please complete the following transaction. totally normal. everyone does this.</p>
+    <div class="fee">Date Agreement™ &nbsp; <b>$499</b><small>one-time fee • non-refundable • absolutely worth it</small></div>
+    <button class="btn full" id="p">pay $499 &amp; confirm 😭</button>
+    <button class="link" id="b">go back</button>`);
+  document.getElementById('p').onclick=done;
+  document.getElementById('b').onclick=glad;
+}
+function done(){
+  confetti(200);
+  show(`<div class="icon" style="font-size:3rem">😂</div>
+    <h2>lol, just kidding. it's free.</h2>
+    <p>I'm paying anyway. Here's the plan:</p>
+    <div class="summary">📅 <b>${state.day}</b><br>⏰ <b>${state.time}</b><br>🍽️ <b>${state.food}</b></div>
+    <p style="margin-top:14px">see you soon ♥</p>`);
+}
+ask();
+</script>
+</body>
+</html>
